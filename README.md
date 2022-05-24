@@ -91,7 +91,7 @@ CodeScannerCameraView(
 
 ## Methods provided
 
-Create a camera listener to plug it with any camera controller, to scan for codes:
+Create a camera listener and plug it with any camera controller, to scan for codes:
 ```dart
 final cameraController = CameraController();
 
