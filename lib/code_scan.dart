@@ -89,8 +89,8 @@ class CodeScanner extends StatefulWidget {
   final double? aspectRatio;
 
   final void Function(CameraController controller)? onCreated;
-  final void Function(String? code, Barcode details, CameraController controller)? onScan;
-  final void Function(List<Barcode> barcodes, CameraController controller)? onScanAll;
+  final void Function(String? code, Barcode details, CodeScannerCameraListener listener)? onScan;
+  final void Function(List<Barcode> barcodes, CodeScannerCameraListener listener)? onScanAll;
 
   /// Widget to show before the cameras are initialized.
   final Widget? loading;
@@ -220,8 +220,8 @@ class CodeScannerCameraListener {
   final BarcodeScanner scanner;
   final bool once;
   
-  final void Function(String? code, Barcode details, CameraController controller)? onScan;
-  final void Function(List<Barcode> barcodes, CameraController controller)? onScanAll;
+  final void Function(String? code, Barcode details, CodeScannerCameraListener listener)? onScan;
+  final void Function(List<Barcode> barcodes, CodeScannerCameraListener listener)? onScanAll;
 
   CodeScannerCameraListener(
     this.controller,
@@ -279,8 +279,8 @@ class CodeScannerCameraListener {
     if (!controller.value.isStreamingImages || barcodes.isEmpty) return;
 
     if (once) await stop();
-    onScan?.call(barcodes.first.rawValue, barcodes.first, controller);
-    onScanAll?.call(barcodes, controller);
+    onScan?.call(barcodes.first.rawValue, barcodes.first, this);
+    onScanAll?.call(barcodes, this);
   }
 }
 
