@@ -10,8 +10,6 @@ import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart
 import 'package:code_scan/utils/image.dart';
 import 'package:code_scan/utils/list.dart';
 
-export 'package:camera/camera.dart';
-
 /// # Code Scanner
 /// 
 /// A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with whatever camera widget.
