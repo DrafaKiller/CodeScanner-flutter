@@ -1,39 +1,117 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Code Scanner
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with whatever camera widget.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+* Scan Linear and 2D formats: QR Code, Barcode, ...
+* Widget with integrated camera
+* Listen for callbacks with every code scanned
+* Choose which formats to scan
+* Overlay the camera preview with a custom view
+
+## Scannable Formats
+
+* Aztec
+* Codabar
+* Code 39
+* Code 93
+* Code 128
+* Data Matrix
+* EAN-8
+* EAN-13
+* ITF
+* PDF417
+* QR Code
+* UPC-A
+* UPC-E
 
 ## Getting started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+Install it using pub:
+```
+flutter pub add code_scan
+```
+
+And import the package:
+```dart
+import 'package:code_scan/code_scan.dart';
+```
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
-
 ```dart
-const like = 'sample';
+CodeScanner(
+    onScan: (code, details, controller) => setState(() => this.code = code),
+    onScanAll: (codes, controller) => print('Codes: ' + codes.map((code) => code.rawValue).toString()),
+    formats: [ BarcodeFormat.qrCode ],
+    once: true,
+)
+``` 
+
+Add callbacks for events:
+```dart
+CodeScanner(
+    onScan: (code, details, controller) => ...,
+    onScanAll: (codes, controller) => ...,
+    onCreated: (controller) => ...,
+)
 ```
 
-## Additional information
+Set `loading` and `overlay` widgets, although you can use the default overlay:
+```dart
+CodeScanner(
+    loading: Center(child: CircularProgressIndicator()),
+    overlay: Center(child: Text('Scanning...')),
+)
+```
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+Choose how the widget should react:
+```dart
+CodeScanner(
+    direction: CameraLensDirection.back,
+    resolution: ResolutionPreset.medium,
+    formats: const [ BarcodeFormat.all ],
+    scanInterval: const Duration(seconds: 1),
+    aspectRatio: 480 / 720, // height / width
+    once: false,
+)
+```
+
+The default behavior of the widget is to fill the screen or parent widget, but you can choose the aspect ratio.
+
+You can use the camera view with your camera controller, without having the scanning widget:
+```dart
+final cameraController = CameraController();
+
+CodeScannerCameraView(
+    controller: cameraController,
+)
+```
+
+## Methods provided
+
+Create a camera listener to plug it with any camera controller, to scan for codes:
+```dart
+final cameraController = CameraController();
+
+final listener = CodeScannerCameraListener(
+    cameraController,
+    
+    formats: const [ BarcodeFormat.all ],
+    interval: const Duration(milliseconds: 500),
+    once: false,
+    
+    onScan: (code, details, controller) => ...,
+    onScanAll: (codes, controller) => ...,
+);
+```
+
+Stop the listener whenever you want:
+```dart
+listener.stop();
+```
+
+## GitHub
+
+The package code is available on Github: [Flutter - CodeScanner](https://github.com/DrafaKiller/CodeScanner-flutter)

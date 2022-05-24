@@ -36,6 +36,8 @@ class CameraImageData {
 }
 
 /*
+TODO: -= Image Crop =- (To prevent the scanner to scan too many pixels)
+
 extension InputImageCrop on InputImage {
   InputImage crop(int x, int y, int width, int height) {
     final croppedData = InputImageData(
