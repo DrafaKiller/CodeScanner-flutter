@@ -84,7 +84,7 @@ class CodeScanner extends StatefulWidget {
   /// Duration of delay between scans, to prevent lag.
   final Duration scanInterval;
 
-  /// Whether or not, when a code is scanned, the controller is closed and will no longer scan.
+  /// Whether or not, when a code is scanned, the controller should close and no longer scan.
   /// 
   /// Default: `false`
   final bool once;
@@ -261,11 +261,14 @@ class CodeScannerCameraListener {
 
   void _onImage(CameraImage image) {
     if (!controller.value.isStreamingImages) return;
+    if (onScan == null && onScanAll == null) return;
 
+    /*
     final cropWidth = image.width * 0.5;
     final cropHeight = cropWidth * 0.5;
     final cropX = image.width * 0.25;
     final cropY = image.height * 0.5 - cropHeight / 2;
+    */
 
     final inputImage = image
       //.crop(cropX.toInt(), cropY.toInt(), cropWidth.toInt(), cropHeight.toInt())
