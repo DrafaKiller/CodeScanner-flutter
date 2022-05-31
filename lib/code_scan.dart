@@ -199,8 +199,6 @@ class _CodeScannerState extends State<CodeScanner> with WidgetsBindingObserver {
   }
 
   Future<void> _initCameraController() async {
-    print('[test] yea... idk');
-
     final CameraController controller;
     final widgetController = widget.controller;
     
