@@ -2,6 +2,7 @@
 
 Added:
 * Lifecycle states handling, on `CameraController` created internally
+* Documentation to `CodeScanner`'s constructor
 
 Changed:
 * ChangeLog's format

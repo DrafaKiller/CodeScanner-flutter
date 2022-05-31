@@ -100,6 +100,26 @@ class CodeScanner extends StatefulWidget {
   /// Default: `CodeScannerOverlay()`
   final Widget? overlay;
   
+  /// # Code Scanner
+  /// 
+  /// A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with whatever camera widget.
+  /// 
+  /// ## Features
+  /// 
+  /// * Scan Linear and 2D formats: QR Code, Barcode, ...
+  /// * Widget with integrated camera
+  /// * Listen for callbacks with every code scanned
+  /// * Choose which formats to scan
+  /// * Overlay the camera preview with a custom view
+  /// 
+  /// ## Simple Usage
+  /// ```dart
+  /// CodeScanner(
+  ///   onScan: (code, details, controller) => ...,
+  ///   formats: [ BarcodeFormat.qrCode ],
+  ///   once: true,
+  /// )
+  /// ```
   const CodeScanner({
     super.key,
     this.controller,
