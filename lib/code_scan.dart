@@ -122,38 +122,17 @@ class CodeScanner extends StatefulWidget {
   State<CodeScanner> createState() => _CodeScannerState();
 }
 
-class _CodeScannerState extends State<CodeScanner> {
+class _CodeScannerState extends State<CodeScanner> with WidgetsBindingObserver {
   CameraController? controller;
   CodeScannerCameraListener? listener;
+
+  bool _isInternalController = false;
 
   @override
   void initState() {
     super.initState();
-    availableCameras().then((cameras) async {
-      final CameraController controller;
-      final widgetController = widget.controller;
-      
-      if (widgetController != null) {
-        controller = widgetController;
-      } else {
-        final camera = cameras.firstWhereOrNull((camera) => camera.lensDirection == widget.direction) ?? cameras.first;
-
-        controller = CameraController(camera, widget.resolution, enableAudio: false);
-        await controller.initialize();
-      }
-
-      widget.onCreated?.call(controller);
-      setState(() => this.controller = controller);
-
-      listener = CodeScannerCameraListener(
-        this.controller!,
-        onScan: widget.onScan,
-        onScanAll: widget.onScanAll,
-        formats: widget.formats,
-        interval: widget.scanInterval,
-        once: widget.once,
-      );
-    });
+    WidgetsBinding.instance.addObserver(this);
+    _initCameraController();
   }
 
   @override
@@ -162,10 +141,60 @@ class _CodeScannerState extends State<CodeScanner> {
     controller?.dispose();
     super.dispose();
   }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (!_isInternalController) return;
+
+    if (state == AppLifecycleState.inactive) {
+      final CameraController? cameraController = controller;
+      if (cameraController == null || !cameraController.value.isInitialized) return;
+      cameraController.dispose();
+      setState(() => this.controller = null);
+    } else if (state == AppLifecycleState.resumed) {
+      _createCameraController()
+        .then((controller) async {
+          await controller.initialize();
+          setState(() => this.controller = controller);
+      });
+    }
+  }
+
+  Future<void> _initCameraController() async {
+    final CameraController controller;
+    final widgetController = widget.controller;
+    
+    if (widgetController != null) {
+      controller = widgetController;
+    } else {
+      _isInternalController = true;
+      controller = await _createCameraController();
+      await controller.initialize();
+    }
+
+    widget.onCreated?.call(controller);
+    setState(() => this.controller = controller);
+
+    listener = CodeScannerCameraListener(
+      this.controller!,
+      onScan: widget.onScan,
+      onScanAll: widget.onScanAll,
+      formats: widget.formats,
+      interval: widget.scanInterval,
+      once: widget.once,
+    );
+  }
+  
+  Future<CameraController> _createCameraController() async {
+    final cameras = await availableCameras();
+    final camera = cameras.firstWhereOrNull((camera) => camera.lensDirection == widget.direction) ?? cameras.first;
+    return CameraController(camera, widget.resolution, enableAudio: false);
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (controller == null) return widget.loading ?? Container();
+    if (controller == null || !controller!.value.isInitialized) return widget.loading ?? Container();
     return CodeScannerCameraView(
       controller: controller!,
       overlay: widget.overlay,
