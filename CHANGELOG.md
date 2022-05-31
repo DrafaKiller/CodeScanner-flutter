@@ -1,7 +1,7 @@
 ## 0.3.0
 
 Added:
-* `onAccessDenied` callback to `CodeScanner` widget
+* `onAccessDenied` callback
 
 Fixed:
 * `CameraController` created in the Lifecycle would not have a `CodeScannerCameraListener`
