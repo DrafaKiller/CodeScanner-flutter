@@ -12,7 +12,7 @@ import 'package:code_scan/utils/list.dart';
 
 /// # Code Scanner
 /// 
-/// A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with whatever camera widget.
+/// A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with a camera controller..
 /// 
 /// ## Features
 /// 
@@ -21,6 +21,7 @@ import 'package:code_scan/utils/list.dart';
 /// * Listen for callbacks with every code scanned
 /// * Choose which formats to scan
 /// * Overlay the camera preview with a custom view
+/// * Camera lifecycle
 /// 
 /// ## Scannable Formats
 /// 
@@ -88,9 +89,21 @@ class CodeScanner extends StatefulWidget {
   final bool once;
   final double? aspectRatio;
 
+  /// Called whenever a controller is created.
+  /// 
+  /// A new controller is created when initializing the widget and when the life cycle is resumed.
   final void Function(CameraController controller)? onCreated;
   final void Function(String? code, Barcode details, CodeScannerCameraListener listener)? onScan;
   final void Function(List<Barcode> barcodes, CodeScannerCameraListener listener)? onScanAll;
+  
+  /// Called whenever camera access permission is denied by the user.
+  /// 
+  /// Return `true` to retry, else `false`. Not setting this callback, will automatically never retry.
+  /// 
+  /// Careful when retrying, this permission could have been rejected automatically, if you keep trying then it will silently spam the permission in a cycle. The `error` given can be useful to check this.
+  /// 
+  /// Another approach would be to request the permission preemptively, before creating this widget, so it will never be needed to handle it here.
+  final bool Function(CameraException error, CameraController controller)? onAccessDenied;
 
   /// Widget to show before the cameras are initialized.
   final Widget? loading;
@@ -102,7 +115,7 @@ class CodeScanner extends StatefulWidget {
   
   /// # Code Scanner
   /// 
-  /// A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with whatever camera widget.
+  /// A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with a camera controller.
   /// 
   /// ## Features
   /// 
@@ -118,6 +131,10 @@ class CodeScanner extends StatefulWidget {
   ///   onScan: (code, details, controller) => ...,
   ///   formats: [ BarcodeFormat.qrCode ],
   ///   once: true,
+  ///   onAccessDenied: (error, controller) {
+  ///     Navigator.of(context).pop();
+  ///     return false;
+  ///   },
   /// )
   /// ```
   const CodeScanner({
@@ -133,6 +150,7 @@ class CodeScanner extends StatefulWidget {
     this.onCreated,
     this.onScan,
     this.onScanAll,
+    this.onAccessDenied,
 
     this.loading,
     this.overlay,
@@ -146,7 +164,9 @@ class _CodeScannerState extends State<CodeScanner> with WidgetsBindingObserver {
   CameraController? controller;
   CodeScannerCameraListener? listener;
 
-  bool _isInternalController = false;
+  bool retry = true;
+  bool initialized = false;
+  bool isInternalController = false;
 
   @override
   void initState() {
@@ -165,37 +185,45 @@ class _CodeScannerState extends State<CodeScanner> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (!_isInternalController) return;
+    if (!isInternalController) return;
 
     if (state == AppLifecycleState.inactive) {
       final CameraController? cameraController = controller;
       if (cameraController == null || !cameraController.value.isInitialized) return;
       cameraController.dispose();
       setState(() => this.controller = null);
-    } else if (state == AppLifecycleState.resumed) {
-      _createCameraController()
-        .then((controller) async {
-          await controller.initialize();
-          setState(() => this.controller = controller);
-      });
+    } else if (state == AppLifecycleState.resumed && retry && initialized && controller == null) {
+      initialized = false;
+      _initCameraController();
     }
   }
 
   Future<void> _initCameraController() async {
+    print('[test] yea... idk');
+
     final CameraController controller;
     final widgetController = widget.controller;
     
     if (widgetController != null) {
+      isInternalController = false;
       controller = widgetController;
     } else {
-      _isInternalController = true;
+      isInternalController = true;
       controller = await _createCameraController();
-      await controller.initialize();
+      try {
+        await controller.initialize();
+      } on CameraException catch (error) {
+        controller.dispose();
+        retry = widget.onAccessDenied?.call(error, controller) ?? false;
+        initialized = true;
+        return;
+      }
     }
 
     widget.onCreated?.call(controller);
     setState(() => this.controller = controller);
 
+    if (listener != null) listener!.dispose();
     listener = CodeScannerCameraListener(
       this.controller!,
       onScan: widget.onScan,
@@ -204,6 +232,8 @@ class _CodeScannerState extends State<CodeScanner> with WidgetsBindingObserver {
       interval: widget.scanInterval,
       once: widget.once,
     );
+
+    initialized = true;
   }
   
   Future<CameraController> _createCameraController() async {
@@ -299,7 +329,9 @@ class CodeScannerCameraListener {
 
   Future<void> stop() async {
     await imageController.close();
-    await controller.stopImageStream();
+    if (controller.value.isStreamingImages) {
+      await controller.stopImageStream();
+    } 
   }
 
   Future<void> dispose() async {

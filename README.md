@@ -1,6 +1,6 @@
 # Code Scanner
 
-A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with whatever camera widget.
+A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with a camera controller.
 
 ## Features
 
@@ -9,6 +9,7 @@ A flexible code scanner for QR codes, barcodes and many others. Using [Google's 
 * Listen for callbacks with every code scanned
 * Choose which formats to scan
 * Overlay the camera preview with a custom view
+* Camera lifecycle
 
 ## Scannable Formats
 
@@ -88,6 +89,12 @@ CodeScannerCameraView(
     controller: cameraController,
 )
 ```
+
+### Caution
+
+If you use your camera controller, it's recommended that you be responsible to control camera resources.
+
+Manage it yourself using [the lifecycle](https://pub.dev/packages/camera#handling-lifecycle-states) or make sure it's already being managed by some other widget.
 
 ## Methods provided
 
