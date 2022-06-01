@@ -1,3 +1,6 @@
+[![Pub.dev package](https://img.shields.io/badge/pub.dev-code__scan-blue)](https://pub.dev/packages/code_scan)
+[![GitHub repository](https://img.shields.io/badge/GitHub-CodeScanner--flutter-blue?logo=github)](https://github.com/DrafaKiller/CodeScanner-flutter)
+
 # Code Scanner
 
 A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with a camera controller.
