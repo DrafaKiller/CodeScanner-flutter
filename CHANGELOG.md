@@ -1,3 +1,8 @@
+## 0.3.2
+
+Changed:
+* `onAccessDenied` return value is optional, default is `false`
+
 ## 0.3.1
 
 Added:

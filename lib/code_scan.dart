@@ -103,7 +103,7 @@ class CodeScanner extends StatefulWidget {
   /// Careful when retrying, this permission could have been rejected automatically, if you keep trying then it will silently spam the permission in a cycle. The `error` given can be useful to check this.
   /// 
   /// Another approach would be to request the permission preemptively, before creating this widget, so it will never be needed to handle it here.
-  final bool Function(CameraException error, CameraController controller)? onAccessDenied;
+  final bool? Function(CameraException error, CameraController controller)? onAccessDenied;
 
   /// Widget to show before the cameras are initialized.
   final Widget? loading;
