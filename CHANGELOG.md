@@ -1,7 +1,7 @@
 ## 0.3.3
 
 Fixed:
-* "Memory leak" right before the app closes.
+* "Memory leak" right before the app closes
 
 ## 0.3.2
 
