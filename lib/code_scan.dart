@@ -191,7 +191,7 @@ class _CodeScannerState extends State<CodeScanner> with WidgetsBindingObserver {
       final CameraController? cameraController = controller;
       if (cameraController == null || !cameraController.value.isInitialized) return;
       cameraController.dispose();
-      setState(() => this.controller = null);
+      if (mounted) setState(() => this.controller = null);
     } else if (state == AppLifecycleState.resumed && retry && initialized && controller == null) {
       initialized = false;
       _initCameraController();
