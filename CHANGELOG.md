@@ -1,3 +1,12 @@
+## 0.4.0
+
+Added:
+* Exported used interfaces `ResolutionPreset` and `BarcodeFormat`
+* `onError` callback
+
+Changed:
+* Default `ResolutionPreset` from `medium` to `high`, because `medium` may not be supported on all devices ([CodeScanner-flutter/issues/1](https://github.com/DrafaKiller/CodeScanner-flutter/issues/1))
+
 ## 0.3.3
 
 Fixed:

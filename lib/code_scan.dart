@@ -10,6 +10,9 @@ import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart
 import 'package:code_scan/utils/image.dart';
 import 'package:code_scan/utils/list.dart';
 
+export 'package:camera/camera.dart' show ResolutionPreset;
+export 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart' show BarcodeFormat;
+
 /// # Code Scanner
 /// 
 /// A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with a camera controller..
@@ -46,7 +49,7 @@ class CodeScanner extends StatefulWidget {
   /// * back
   /// * external
   /// 
-  /// Default: `front`
+  /// Default: `back`
   final CameraLensDirection direction;
 
   /// Quality of the camera:
@@ -58,10 +61,12 @@ class CodeScanner extends StatefulWidget {
   /// 
   /// or
   /// 
-  /// * min
   /// * max
   /// 
-  /// Default: `medium`
+  /// Setting a lower resolution preset may not support scanning features on some devices.
+  /// It's recommended to use the highest quality preset available, if performance is not an issue.
+  /// 
+  /// Default: `high`
   final ResolutionPreset resolution;
 
   /// List of the scannable formats:
@@ -95,6 +100,7 @@ class CodeScanner extends StatefulWidget {
   final void Function(CameraController controller)? onCreated;
   final void Function(String? code, Barcode details, CodeScannerCameraListener listener)? onScan;
   final void Function(List<Barcode> barcodes, CodeScannerCameraListener listener)? onScanAll;
+  final void Function(Object error, CodeScannerCameraListener listener)? onError;
   
   /// Called whenever camera access permission is denied by the user.
   /// 
@@ -141,7 +147,7 @@ class CodeScanner extends StatefulWidget {
     super.key,
     this.controller,
     this.direction = CameraLensDirection.back,
-    this.resolution = ResolutionPreset.medium,
+    this.resolution = ResolutionPreset.high,
     this.formats = const [ BarcodeFormat.all ],
     this.scanInterval = const Duration(seconds: 1),
     this.once = false,
@@ -151,6 +157,7 @@ class CodeScanner extends StatefulWidget {
     this.onScan,
     this.onScanAll,
     this.onAccessDenied,
+    this.onError,
 
     this.loading,
     this.overlay,
@@ -299,6 +306,7 @@ class CodeScannerCameraListener {
   
   final void Function(String? code, Barcode details, CodeScannerCameraListener listener)? onScan;
   final void Function(List<Barcode> barcodes, CodeScannerCameraListener listener)? onScanAll;
+  final void Function(Object error, CodeScannerCameraListener listener)? onError;
 
   CodeScannerCameraListener(
     this.controller,
@@ -309,12 +317,19 @@ class CodeScannerCameraListener {
       
       this.onScan,
       this.onScanAll,
+      this.onError,
     }
   ) : this.scanner = BarcodeScanner(formats: formats) {
     start();
     imageController.stream
       .throttleTime(interval, leading: false, trailing: true)
-      .listen((image) => _onImage(image));
+      .listen((image) async {
+        try {
+          await _onImage(image);
+        } catch (error) {
+          onError?.call(error, this);
+        }
+      });
   }
 
   void start() {
@@ -336,9 +351,9 @@ class CodeScannerCameraListener {
     await imageController.close();
   }
 
-  void _onImage(CameraImage image) {
-    if (!controller.value.isStreamingImages) return;
-    if (onScan == null && onScanAll == null) return;
+  Future<List<Barcode>> _onImage(CameraImage image) async {
+    if (!controller.value.isStreamingImages) throw Exception('Camera is not streaming images');
+    if (onScan == null && onScanAll == null) throw Exception('No listener');
 
     /*
     final cropWidth = image.width * 0.5;
@@ -351,10 +366,12 @@ class CodeScannerCameraListener {
       //.crop(cropX.toInt(), cropY.toInt(), cropWidth.toInt(), cropHeight.toInt())
       .toInputImage(controller.description);
 
-    scanner.processImage(inputImage).then((barcodes) => _onImageProcessed(barcodes));
+    final barcodes = await scanner.processImage(inputImage);
+    await _onImageProcessed(barcodes);
+    return barcodes;
   }
 
-  void _onImageProcessed(List<Barcode> barcodes) async {
+  Future<void> _onImageProcessed(List<Barcode> barcodes) async {
     if (!controller.value.isStreamingImages || barcodes.isEmpty) return;
 
     if (once) await stop();
