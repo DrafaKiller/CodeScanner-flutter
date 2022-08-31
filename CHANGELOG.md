@@ -1,3 +1,11 @@
+## 0.4.2
+
+Added:
+- `lints` developer dependency
+
+Fixed:
+- Lints error: Unnecessary `dart:typed_data` import
+
 ## 0.4.1
 
 Fixed:
