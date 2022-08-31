@@ -2,12 +2,12 @@ library code_scan;
 
 import 'dart:async';
 
-import 'package:code_scan/camera_listener.dart';
-import 'package:code_scan/camera_view.dart';
 import 'package:flutter/material.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 
+import 'package:code_scan/utils/image.dart';
 import 'package:code_scan/utils/list.dart';
 
 export 'package:camera/camera.dart' show ResolutionPreset;
@@ -97,7 +97,7 @@ class CodeScanner extends StatefulWidget {
   /// Called whenever a controller is created.
   /// 
   /// A new controller is created when initializing the widget and when the life cycle is resumed.
-  final void Function(CameraController controller, CodeScannerCameraListener listener)? onCreated;
+  final void Function(CameraController controller)? onCreated;
   final void Function(String? code, Barcode details, CodeScannerCameraListener listener)? onScan;
   final void Function(List<Barcode> barcodes, CodeScannerCameraListener listener)? onScanAll;
   final void Function(Object error, CodeScannerCameraListener listener)? onError;
@@ -171,72 +171,74 @@ class _CodeScannerState extends State<CodeScanner> with WidgetsBindingObserver {
   CameraController? controller;
   CodeScannerCameraListener? listener;
 
-  bool retry = false;
-  bool get isInitialized => controller?.value.isInitialized ?? false;
-  bool get isInternalController => widget.controller == null;
+  bool retry = true;
+  bool initialized = false;
+  bool isInternalController = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initialize();
+    _initCameraController();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    disposeCamera();
+    listener?.dispose();
+    controller?.dispose();
     super.dispose();
-  }
-
-  Future<void> disposeCamera() async {
-    await listener?.dispose();
-    if (isInternalController) await controller?.dispose();
-    if (mounted) setState(() {
-      listener = null;
-      controller = null;
-    });
   }
   
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
     if (!isInternalController) return;
-    if (state == AppLifecycleState.inactive && isInitialized) {
-      disposeCamera();
-    } else if (state == AppLifecycleState.resumed) {
-      _initialize();
+
+    if (state == AppLifecycleState.inactive) {
+      final CameraController? cameraController = controller;
+      if (cameraController == null || !cameraController.value.isInitialized) return;
+      cameraController.dispose();
+      if (mounted) setState(() => this.controller = null);
+    } else if (state == AppLifecycleState.resumed && retry && initialized && controller == null) {
+      initialized = false;
+      _initCameraController();
     }
   }
 
-  Future<void> _initialize() async {
-    await disposeCamera();
-
+  Future<void> _initCameraController() async {
     final CameraController controller;
-    if (isInternalController) {
+    final widgetController = widget.controller;
+    
+    if (widgetController != null) {
+      isInternalController = false;
+      controller = widgetController;
+    } else {
+      isInternalController = true;
       controller = await _createCameraController();
       try {
         await controller.initialize();
       } on CameraException catch (error) {
+        controller.dispose();
         retry = widget.onAccessDenied?.call(error, controller) ?? false;
+        initialized = true;
         return;
       }
-    } else {
-      controller = widget.controller!;
     }
 
-    setState(() {
-      this.controller = controller;
-      this.listener = CodeScannerCameraListener(
-        this.controller!,
-        onScan: widget.onScan,
-        onScanAll: widget.onScanAll,
-        formats: widget.formats,
-        interval: widget.scanInterval,
-        once: widget.once,
-      );
-    });
+    widget.onCreated?.call(controller);
+    setState(() => this.controller = controller);
 
-    widget.onCreated?.call(controller, listener!);
+    if (listener != null) listener!.dispose();
+    listener = CodeScannerCameraListener(
+      this.controller!,
+      onScan: widget.onScan,
+      onScanAll: widget.onScanAll,
+      formats: widget.formats,
+      interval: widget.scanInterval,
+      once: widget.once,
+    );
+
+    initialized = true;
   }
   
   Future<CameraController> _createCameraController() async {
@@ -247,11 +249,188 @@ class _CodeScannerState extends State<CodeScanner> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (!isInitialized) return widget.loading ?? Container();
+    if (controller == null || !controller!.value.isInitialized) return widget.loading ?? Container();
     return CodeScannerCameraView(
       controller: controller!,
       overlay: widget.overlay,
       aspectRatio: widget.aspectRatio,
+    );
+  }
+}
+
+/// Widget to show a camera with an overlay, this widget tries to expand.
+class CodeScannerCameraView extends StatelessWidget {
+  final CameraController controller;
+  final Widget? overlay;
+  final double? aspectRatio;
+
+  const CodeScannerCameraView({
+    super.key,
+    required this.controller,
+    this.overlay,
+    this.aspectRatio,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    final cameraAspectRatio = controller.value.aspectRatio;
+    return LayoutBuilder(
+      builder: (context, constraints) => Stack(
+        children: [
+          SizedBox(
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            child: FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: constraints.maxWidth,
+                height: constraints.maxWidth * cameraAspectRatio,
+                child: CameraPreview(controller),
+              ),
+            ),
+          ),
+          overlay ?? CodeScannerOverlay(constraints.maxWidth, constraints.minHeight),
+        ],
+      ),
+    );
+  }
+}
+
+/// Create a camera listener to plug it with any camera controller, to scan for codes
+class CodeScannerCameraListener {
+  final CameraController controller;
+  final imageController = StreamController<CameraImage>();
+  final BarcodeScanner scanner;
+  final bool once;
+  
+  final void Function(String? code, Barcode details, CodeScannerCameraListener listener)? onScan;
+  final void Function(List<Barcode> barcodes, CodeScannerCameraListener listener)? onScanAll;
+  final void Function(Object error, CodeScannerCameraListener listener)? onError;
+
+  CodeScannerCameraListener(
+    this.controller,
+    {
+      List<BarcodeFormat> formats = const [ BarcodeFormat.all ],
+      Duration interval = const Duration(milliseconds: 500),
+      this.once = false,
+      
+      this.onScan,
+      this.onScanAll,
+      this.onError,
+    }
+  ) : this.scanner = BarcodeScanner(formats: formats) {
+    start();
+    imageController.stream
+      .throttleTime(interval, leading: false, trailing: true)
+      .listen((image) async {
+        try {
+          await _onImage(image);
+        } catch (error) {
+          onError?.call(error, this);
+        }
+      });
+  }
+
+  void start() {
+    if (!controller.value.isStreamingImages) {
+      controller.startImageStream((CameraImage image) {
+        if (!imageController.isClosed) imageController.add(image);
+      });
+    }
+  }
+
+  Future<void> stop() async {
+    await imageController.close();
+    if (controller.value.isStreamingImages) {
+      await controller.stopImageStream();
+    } 
+  }
+
+  Future<void> dispose() async {
+    await imageController.close();
+  }
+
+  Future<List<Barcode>> _onImage(CameraImage image) async {
+    if (!controller.value.isStreamingImages) throw Exception('Camera is not streaming images');
+    if (onScan == null && onScanAll == null) throw Exception('No listener');
+
+    /*
+    final cropWidth = image.width * 0.5;
+    final cropHeight = cropWidth * 0.5;
+    final cropX = image.width * 0.25;
+    final cropY = image.height * 0.5 - cropHeight / 2;
+    */
+
+    final inputImage = image
+      //.crop(cropX.toInt(), cropY.toInt(), cropWidth.toInt(), cropHeight.toInt())
+      .toInputImage(controller.description);
+
+    final barcodes = await scanner.processImage(inputImage);
+    await _onImageProcessed(barcodes);
+    return barcodes;
+  }
+
+  Future<void> _onImageProcessed(List<Barcode> barcodes) async {
+    if (!controller.value.isStreamingImages || barcodes.isEmpty) return;
+
+    if (once) await stop();
+    onScan?.call(barcodes.first.rawValue, barcodes.first, this);
+    onScanAll?.call(barcodes, this);
+  }
+}
+
+/// Default overlay displayed on top of the camera
+class CodeScannerOverlay extends StatelessWidget {
+  final double width;
+  final double height;
+
+  const CodeScannerOverlay(this.width, this.height, {Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Center(
+          child: Container(
+            width: width * 0.8,
+            height: 0.8,
+            color: Colors.redAccent.withOpacity(0.4),
+          ),
+        ),
+        Center(
+          child: Container(
+            width: width * 0.8,
+            height: width * 0.7,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black.withOpacity(0.3), width: 0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+        ColorFiltered(
+          colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.2), BlendMode.srcOut),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(decoration: BoxDecoration(
+                color: Colors.black,
+                backgroundBlendMode: BlendMode.dstIn,
+              )),
+              Center(
+                child: Container(
+                  width: width * 0.8,
+                  height: width * 0.7,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ]
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,21 +1,3 @@
-## 0.5.0
-
-*BREAKING CHANGES!*
-
-Fixed:
-* Widget life cycle using an internal controller.
-  The widget would crash when going `inactive` and then `resumed`
-* Added `removeObserver` on disposed
-
-Removed:
-* `.start()` listener function, now instantiate a new listener
-* `.stop()` listener function, now use `.dispose()` to stop the listener
-
-> The `CodeScannerCameraListener` is now disposed along with the camera and a new listener is initialized when the widget resumes. This is so the lifecycle can make sure the listener is synchronized with the current camera controller. This also means that the `onCreated` callback will be called more than once, when the widget's life cycle is resumed, with the updated camera controller and listener.
-
-Changed:
-* Separated classes into multiple files
-
 ## 0.4.0
 
 Added:
