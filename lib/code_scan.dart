@@ -340,16 +340,20 @@ class CodeScannerCameraListener {
     }
   }
 
+  /**
+   * Stops the camera image controller and image stream.
+   */
   Future<void> stop() async {
     await imageController.close();
     if (controller.value.isStreamingImages) {
       await controller.stopImageStream();
     } 
   }
-
-  Future<void> dispose() async {
-    await imageController.close();
-  }
+  
+  /**
+   * Alias of the `.stop()` method, for consistency with the flutter environment.
+   */
+  Future<void> dispose() async => await stop();
 
   Future<List<Barcode>> _onImage(CameraImage image) async {
     if (!controller.value.isStreamingImages) throw Exception('Camera is not streaming images');
