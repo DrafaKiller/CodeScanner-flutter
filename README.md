@@ -5,6 +5,10 @@
 
 A flexible code scanner for QR codes, barcodes and many others. Using [Google's ML Kit](https://developers.google.com/ml-kit/vision/barcode-scanning). Use it as a Widget with a camera or use the methods provided, with a camera controller.
 
+> **Note:** This package is only **Android and iOS** compatible. It's having issues with mislabeling compatible platforms by pub.dev.
+> 
+> Google's ML Kit is only implemented for mobile.
+
 ## Features
 
 * Scan Linear and 2D formats: QR Code, Barcode, ...

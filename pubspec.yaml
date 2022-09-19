@@ -11,7 +11,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
   camera: ^0.10.0
   google_mlkit_barcode_scanning: ^0.4.0
   rxdart: ^0.27.4
@@ -20,7 +19,3 @@ dev_dependencies:
   lints: ^2.0.0
 
 flutter:
-  plugin:
-    platforms:
-      android:
-      ios: 
