@@ -1,7 +1,12 @@
+## 0.4.4 
+
+Fixed:
+- Missing `flutter:` to `pubspec.yaml` to fix pub.dev's platform compatibilities.
+
 ## 0.4.3
 
 Fixed:
-- Flutter version to `>=2.10.0` in `pubspec.yaml`, hopefully fixing pub.dev's platform compatibilities.
+- Flutter version to `>=2.10.0` in `pubspec.yaml`, hopefully fixing pub.dev's platform compatibilities. *(Did not work)*
 - **CodeScannerCameraListener** `.dispose()` method now does the same as `.stop()` to make sure no more data passes through the listener, into the callbacks.
 
 ## 0.4.2
