@@ -1,7 +1,13 @@
+## 0.4.5
+
+Fixed:
+- Added `platforms` to `pubspec.yaml`, to fix pub.dev's platform compatibilities.
+- Fake lint error, again.
+
 ## 0.4.4 
 
 Fixed:
-- Missing `flutter:` to `pubspec.yaml` to fix pub.dev's platform compatibilities.
+- Missing `flutter` to `pubspec.yaml`, to fix pub.dev's platform compatibilities. *(Did not work)*
 
 ## 0.4.3
 
