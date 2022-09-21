@@ -1,10 +1,15 @@
+## 0.4.6
+
+Fixed:
+- Issue tracker in `pubspec.yaml`
+
 ## 0.4.5
 
 Added:
-- `README.md` warning about the pub.dev package platform compatibility mislabeling.
+- `README.md` warning about the pub.dev package platform compatibility mislabeling
 
 Fixed:
-- Fake lint error, again.
+- Fake lint error, again
 
 ## 0.4.4 
 
