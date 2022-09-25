@@ -1,3 +1,8 @@
+## 0.4.7
+
+Removed:
+- `README.md` warning about the pub.dev package platform compatibility mislabeling
+
 ## 0.4.6
 
 Fixed:
