@@ -1,3 +1,8 @@
+## 0.4.8
+
+Changed:
+- Updated dependencies, google_mlkit_barcode_scanning to `0.5.0`
+
 ## 0.4.7
 
 Removed:

@@ -7,7 +7,7 @@ packages:
       name: camera
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.10.0+1"
+    version: "0.10.1"
   camera_android:
     dependency: transitive
     description:
@@ -87,7 +87,7 @@ packages:
       name: google_mlkit_barcode_scanning
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.0"
+    version: "0.5.0"
   google_mlkit_commons:
     dependency: transitive
     description:
@@ -186,4 +186,4 @@ packages:
     version: "2.1.2"
 sdks:
   dart: ">=2.17.0 <3.0.0"
-  flutter: ">=2.10.0"
+  flutter: ">=3.0.0"
