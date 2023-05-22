@@ -1,6 +1,6 @@
 name: code_scan
 description: A flexible code scanner for QR codes, barcodes and many others. Using Google's ML Kit. Use it as a Widget with a camera or use the methods provided, with a camera controller.
-version: 0.4.9
+version: 0.4.10
 repository: https://github.com/DrafaKiller/CodeScanner-flutter
 issue_tracker: https://github.com/DrafaKiller/CodeScanner-flutter/issues
 

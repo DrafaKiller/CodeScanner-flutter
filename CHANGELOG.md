@@ -1,3 +1,14 @@
+## 0.4.10
+
+Fixed:
+- Pub.dev format problem
+- Updating CHANGELOG.md correctly 
+
+## 0.4.9
+
+Changed:
+- Updated dependencies, google_mlkit_barcode_scanning to `0.6.0`
+
 ## 0.4.8
 
 Changed:
