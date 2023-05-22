@@ -87,14 +87,14 @@ packages:
       name: google_mlkit_barcode_scanning
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.0"
+    version: "0.6.0"
   google_mlkit_commons:
     dependency: transitive
     description:
       name: google_mlkit_commons
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.0"
+    version: "0.3.0"
   js:
     dependency: transitive
     description:
